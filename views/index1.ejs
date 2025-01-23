@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Invoice</title>
+  <style>
+    /* Basic styling for table and buttons */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .btn {
+      padding: 5px 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .btn-add {
+      background-color: #28a745;
+      color: white;
+    }
+    .btn-remove {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Invoice</h1>
+  <form id="invoiceForm" action="/download-invoice" method="POST" enctype="multipart/form-data">
+    <div>
+      <label>Company Name:</label>
+      <input type="text" name="companyName" required>
+    </div>
+    <div>
+      <label>Address:</label>
+      <input type="text" name="address" required>
+    </div>
+    <div>
+      <label>Phone:</label>
+      <input type="text" name="phone" required>
+    </div>
+    <!-- Other form fields like GSTIN, invoice date, etc. -->
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Quantity</th>
+          <th>Rate</th>
+          <th>SGST (%)</th>
+          <th>CGST (%)</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- EJS Loop to render existing items -->
+        <%var items=[]%>
+        <% items.forEach(function(item, index) { %>
+        <tr data-index="<%= index %>">
+          <td><input type="text" name="items[<%= index %>][description]" value="<%= item.description %>" required></td>
+          <td><input type="number" name="items[<%= index %>][quantity]" value="<%= item.quantity %>" class="quantity" required></td>
+          <td><input type="number" name="items[<%= index %>][rate]" value="<%= item.rate %>" class="rate" required></td>
+          <td><input type="number" name="items[<%= index %>][sgst]" value="<%= item.sgst %>" class="sgst" required></td>
+          <td><input type="number" name="items[<%= index %>][cgst]" value="<%= item.cgst %>" class="cgst" required></td>
+          <td class="amount"></td>
+          <td><button type="button" class="btn btn-remove">Remove</button></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <button type="button" class="btn btn-add">Add Item</button>
+    <div>
+      <label>Subtotal:</label>
+      <span id="subtotal">0</span>
+    </div>
+    <div>
+      <label>Total SGST:</label>
+      <span id="totalSgst">0</span>
+    </div>
+    <div>
+      <label>Total CGST:</label>
+      <span id="totalCgst">0</span>
+    </div>
+    <div>
+      <label>Total Amount:</label>
+      <span id="totalAmount">0</span>
+    </div>
+    <button type="submit">Generate Invoice</button>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Calculate totals on page load
+      calculateTotals();
+
+      // Add new item row dynamically
+      document.querySelector('.btn-add').addEventListener('click', function() {
+        const tbody = document.querySelector('#itemsTable tbody');
+        const index = tbody.children.length; // Get current item index
+        const newRow = `
+          <tr data-index="${index}">
+            <td><input type="text" name="items[${index}][description]" required></td>
+            <td><input type="number" name="items[${index}][quantity]" class="quantity" required></td>
+            <td><input type="number" name="items[${index}][rate]" class="rate" required></td>
+            <td><input type="number" name="items[${index}][sgst]" class="sgst" required></td>
+            <td><input type="number" name="items[${index}][cgst]" class="cgst" required></td>
+            <td class="amount"></td>
+            <td><button type="button" class="btn btn-remove">Remove</button></td>
+          </tr>`;
+        tbody.insertAdjacentHTML('beforeend', newRow);
+        calculateTotals();
+      });
+
+      // Remove item row
+      document.querySelector('#itemsTable').addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-remove')) {
+          e.target.closest('tr').remove();
+          calculateTotals();
+        }
+      });
+
+      // Recalculate totals on quantity, rate, SGST, or CGST change
+      document.querySelector('#itemsTable').addEventListener('input', function(e) {
+        if (e.target.classList.contains('quantity') ||
+            e.target.classList.contains('rate') ||
+            e.target.classList.contains('sgst') ||
+            e.target.classList.contains('cgst')) {
+          calculateTotals();
+        }
+      });
+
+      // Function to calculate totals
+      function calculateTotals() {
+        let subtotal = 0, totalSgst = 0, totalCgst = 0, totalAmount = 0;
+        const rows = document.querySelectorAll('#itemsTable tbody tr');
+        rows.forEach(function(row) {
+          const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+          const rate = parseFloat(row.querySelector('.rate').value) || 0;
+          const sgst = parseFloat(row.querySelector('.sgst').value) || 0;
+          const cgst = parseFloat(row.querySelector('.cgst').value) || 0;
+          const amount = quantity * rate;
+          const sgstAmount = amount * (sgst / 100);
+          const cgstAmount = amount * (cgst / 100);
+          const total = amount + sgstAmount + cgstAmount;
+          row.querySelector('.amount').textContent = total.toFixed(2);
+          subtotal += amount;
+          totalSgst += sgstAmount;
+          totalCgst += cgstAmount;
+          totalAmount += total;
+        });
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('totalSgst').textContent = totalSgst.toFixed(2);
+        document.getElementById('totalCgst').textContent = totalCgst.toFixed(2);
+        document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+      }
+    });
+  </script>
+</body>
+</html>
