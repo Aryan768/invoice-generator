@@ -49,7 +49,9 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
     const doc = new PDFDocument();
     doc.pipe(res);
 
-    const { companyName, address, phone, invoicedate, gstin, customerName, customerAddress, duedate, items, invoiceno, sgst, cgst } = req.body;
+    const { companyName, address, phone, invoicedate, gstin, items,customerName, customerAddress, duedate,  invoiceno, sgst, cgst } = req.body;
+ // let invoiceDate=req.body.invoicedate
+    console.log(req.body);
 
     // Company Header
     doc.fontSize(18).font('Helvetica-Bold').text(companyName || 'Your Company Name', 49, 25, { width: 400 });
@@ -98,21 +100,26 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
     doc.moveTo(50, tableTop + itemHeight).lineTo(550, tableTop + itemHeight).stroke();
 
     let y = tableTop + itemHeight + 5;
-
     // Tax rate for SGST and CGST
-    const sgstRate = sgst / 100; // e.g., for SGST of 9%
-    const cgstRate = cgst / 100; // e.g., for CGST of 9%
-
+   let sgstRate = '';
+  let cgstRate ='' ;
+    
+    console.log(items);
     // Dynamically render items
     items.forEach((item, index) => {
+        if (isNaN(item.quantity) || isNaN(item.rate) || isNaN(item.sgst) || isNaN(item.cgst)) {
+            throw new Error('Invalid data received for item calculations.');
+        }
         const descriptionHeight = doc.heightOfString(item.description || '', {
             width: columnWidths[1], // Constrain to column width
             align: 'left',
         });
 
         const maxHeight = Math.max(itemHeight, descriptionHeight);
-
-        const amount = item.quantity * item.rate;
+// Tax rate for SGST and CGST
+sgstRate = parseFloat(item.sgst) / 100; // e.g., for SGST of 9%
+ cgstRate = parseFloat(item.cgst) / 100; // e.g., for CGST of 9%
+        const amount = Number(item.quantity) * Number(item.rate);
         const sgstAmount = amount * sgstRate;
         const cgstAmount = amount * cgstRate;
         const totalAmount = amount + sgstAmount + cgstAmount;
@@ -127,8 +134,8 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
             .text(item.quantity.toString(), columnXPositions[2] + 5, y)
             .text(Number(item.rate).toFixed(2), columnXPositions[3] + 7, y)
             .text(amount.toFixed(2), columnXPositions[4], y)
-            .text(sgstAmount.toFixed(2), columnXPositions[5], y)
-            .text(cgstAmount.toFixed(2), columnXPositions[6], y)
+            .text(Number(sgstAmount).toFixed(2), columnXPositions[5], y)
+            .text(Number(cgstAmount).toFixed(2), columnXPositions[6], y)
             .text(totalAmount.toFixed(2), columnXPositions[7], y);
 
         // Light grey percentage below SGST/CGST
@@ -141,11 +148,14 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
         doc.moveTo(50, y + maxHeight).lineTo(550, y + maxHeight).stroke();
 
         y += maxHeight + 5;
+        if (isNaN(item.quantity) || isNaN(item.rate) || isNaN(item.sgst) || isNaN(item.cgst)) {
+            throw new Error('Invalid data received for item calculations 22.');
+        }
     });
 
     // Calculate Subtotal and Total amounts
     let subtotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-    const sgstTotal = subtotal * sgstRate;
+    const sgstTotal = Number(subtotal) * sgstRate;
     const cgstTotal = subtotal * cgstRate;
     const totalAmountFinal = subtotal + sgstTotal + cgstTotal;
 
@@ -153,16 +163,16 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
 
     doc.fontSize(12).font('Helvetica-Bold')
         .text('Subtotal:', columnXPositions[5], totalYPosition)
-        .text(subtotal.toFixed(2), columnXPositions[7], totalYPosition);
+        .text(Number(subtotal).toFixed(2), columnXPositions[7], totalYPosition);
 
     totalYPosition += itemHeight * 1.5;
 
-    doc.text('SGST (9%):', columnXPositions[5], totalYPosition)
+    doc.text('SGST :', columnXPositions[5], totalYPosition)
        .text(sgstTotal.toFixed(2), columnXPositions[7], totalYPosition);
 
     totalYPosition += itemHeight * 1.5;
 
-    doc.text('CGST (9%):', columnXPositions[5], totalYPosition)
+    doc.text('CGST :', columnXPositions[5], totalYPosition)
        .text(cgstTotal.toFixed(2), columnXPositions[7], totalYPosition);
 
     totalYPosition += itemHeight * 1.5;

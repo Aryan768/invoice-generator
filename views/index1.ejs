@@ -1,110 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dynamic Invoice</title>
   <style>
-    /* Basic styling for table and buttons */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+      color: #343a40;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #495057;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ced4da;
+    }
+
+    #upload-logo {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    #upload-logo label {
+      font-size: 12px;
+      color: #007bff;
+      cursor: pointer;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
     }
+
     table, th, td {
-      border: 1px solid black;
+      border: 1px solid #dee2e6;
     }
+
     th, td {
       padding: 10px;
       text-align: left;
     }
-    .btn {
-      padding: 5px 10px;
-      margin-top: 10px;
-      cursor: pointer;
+
+    th {
+      background-color: #007bff;
+      color: white;
     }
+
+    td input {
+      width: 100%;
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #ced4da;
+    }
+
+    .btn {
+      padding: 8px 15px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
     .btn-add {
       background-color: #28a745;
       color: white;
+      margin-top: 20px;
     }
+
     .btn-remove {
       background-color: #dc3545;
       color: white;
     }
+
+    #totals {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    #totals label {
+      font-weight: bold;
+      color: #343a40;
+    }
+
+    button[type="submit"] {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+      font-size: 16px;
+    }
+
+    .left-one {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    /* Media queries for responsiveness */
+    @media (max-width: 768px) {
+      .left-one {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
+
 <body>
-  <h1>Invoice</h1>
-  <form id="invoiceForm" action="/download-invoice" method="POST" enctype="multipart/form-data">
-    <div>
-      <label>Company Name:</label>
-      <input type="text" name="companyName" required>
-    </div>
-    <div>
-      <label>Address:</label>
-      <input type="text" name="address" required>
-    </div>
-    <div>
-      <label>Phone:</label>
-      <input type="text" name="phone" required>
-    </div>
-    <!-- Other form fields like GSTIN, invoice date, etc. -->
-    <table id="itemsTable">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Quantity</th>
-          <th>Rate</th>
-          <th>SGST (%)</th>
-          <th>CGST (%)</th>
-          <th>Amount</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- EJS Loop to render existing items -->
-        <%var items=[]%>
-        <% items.forEach(function(item, index) { %>
-        <tr data-index="<%= index %>">
-          <td><input type="text" name="items[<%= index %>][description]" value="<%= item.description %>" required></td>
-          <td><input type="number" name="items[<%= index %>][quantity]" value="<%= item.quantity %>" class="quantity" required></td>
-          <td><input type="number" name="items[<%= index %>][rate]" value="<%= item.rate %>" class="rate" required></td>
-          <td><input type="number" name="items[<%= index %>][sgst]" value="<%= item.sgst %>" class="sgst" required></td>
-          <td><input type="number" name="items[<%= index %>][cgst]" value="<%= item.cgst %>" class="cgst" required></td>
-          <td class="amount"></td>
-          <td><button type="button" class="btn btn-remove">Remove</button></td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
-    <button type="button" class="btn btn-add">Add Item</button>
-    <div>
-      <label>Subtotal:</label>
-      <span id="subtotal">0</span>
-    </div>
-    <div>
-      <label>Total SGST:</label>
-      <span id="totalSgst">0</span>
-    </div>
-    <div>
-      <label>Total CGST:</label>
-      <span id="totalCgst">0</span>
-    </div>
-    <div>
-      <label>Total Amount:</label>
-      <span id="totalAmount">0</span>
-    </div>
-    <button type="submit">Generate Invoice</button>
-  </form>
+  <div id="upload-logo">
+    <label for="logo">Upload Logo:</label>
+    <input type="file" id="logo" name="logo" accept="image/*">
+  </div>
+
+  <div class="container">
+    <h1>Invoice</h1>
+    <form id="invoiceForm">
+      <div class="form-group">
+        <label>Company Name:</label>
+        <input type="text" name="companyName" required>
+      </div>
+      <div class="form-group">
+        <label>Address:</label>
+        <input type="text" name="address" required>
+      </div>
+      <div class="form-group">
+        <label>Phone:</label>
+        <input type="text" name="phone" required>
+      </div>
+      <div class="form-group">
+        <label>Invoice Date:</label>
+        <input type="date" name="invoicedate" required>
+      </div>
+
+      <div class="left-one">
+        <div class="form-group">
+          <label>To (Customer Name):</label>
+          <input type="text" name="customerName" required>
+        </div>
+        <div class="form-group">
+          <label>Customer Address:</label>
+          <input type="text" name="customerAddress" required>
+        </div>
+        <div class="form-group">
+          <label>Due Date:</label>
+          <input type="date" name="duedate" required>
+        </div>
+        <div class="form-group">
+          <label>Invoice No:</label>
+          <input type="text" name="invoiceno" required>
+        </div>
+      </div>
+
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>SGST (%)</th>
+            <th>CGST (%)</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody">
+          <!-- EJS Loop to render existing items -->
+          <% var items = [] %>
+          <% items.forEach(function(item, index) { %>
+          <tr data-index="<%= index %>">
+            <td><input type="text" name="items[<%= index %>][description]" value="<%= item.description %>" required></td>
+            <td><input type="number" name="items[<%= index %>][quantity]" value="<%= item.quantity %>" class="quantity" required></td>
+            <td><input type="number" name="items[<%= index %>][rate]" value="<%= item.rate %>" class="rate" required></td>
+            <td><input type="number" name="items[<%= index %>][sgst]" value="<%= item.sgst %>" class="sgst" required></td>
+            <td><input type="number" name="items[<%= index %>][cgst]" value="<%= item.cgst %>" class="cgst" required></td>
+            <td class="amount"></td>
+            <td><button type="button" class="btn btn-remove">Remove</button></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-add">Add Item</button>
+
+      <div id="totals">
+        <label>Subtotal:</label><span id="subtotal">0</span><br />
+        <label>Total SGST:</label><span id="totalSgst">0</span><br />
+        <label>Total CGST:</label><span id="totalCgst">0</span><br />
+        <label>Total Amount:</label><span id="totalAmount">0</span><br />
+      </div>
+
+      <button type="submit">Generate Invoice</button>
+    </form>
+  </div>
 
   <script>
+    // JavaScript code remains unchanged...
+ 
     document.addEventListener('DOMContentLoaded', function() {
-      // Calculate totals on page load
       calculateTotals();
 
-      // Add new item row dynamically
       document.querySelector('.btn-add').addEventListener('click', function() {
-        const tbody = document.querySelector('#itemsTable tbody');
-        const index = tbody.children.length; // Get current item index
+        const tbody = document.querySelector('#itemsBody');
+        const index = tbody.children.length;
         const newRow = `
           <tr data-index="${index}">
             <td><input type="text" name="items[${index}][description]" required></td>
@@ -119,7 +252,6 @@
         calculateTotals();
       });
 
-      // Remove item row
       document.querySelector('#itemsTable').addEventListener('click', function(e) {
         if (e.target.classList.contains('btn-remove')) {
           e.target.closest('tr').remove();
@@ -127,17 +259,13 @@
         }
       });
 
-      // Recalculate totals on quantity, rate, SGST, or CGST change
       document.querySelector('#itemsTable').addEventListener('input', function(e) {
-        if (e.target.classList.contains('quantity') ||
-            e.target.classList.contains('rate') ||
-            e.target.classList.contains('sgst') ||
-            e.target.classList.contains('cgst')) {
+        if (['quantity', 'rate', 'sgst', 'cgst'].some(cls => e.target.classList.contains(cls))) {
           calculateTotals();
         }
       });
 
-      // Function to calculate totals
+      // Calculate totals
       function calculateTotals() {
         let subtotal = 0, totalSgst = 0, totalCgst = 0, totalAmount = 0;
         const rows = document.querySelectorAll('#itemsTable tbody tr');
@@ -146,22 +274,76 @@
           const rate = parseFloat(row.querySelector('.rate').value) || 0;
           const sgst = parseFloat(row.querySelector('.sgst').value) || 0;
           const cgst = parseFloat(row.querySelector('.cgst').value) || 0;
+
           const amount = quantity * rate;
           const sgstAmount = amount * (sgst / 100);
           const cgstAmount = amount * (cgst / 100);
           const total = amount + sgstAmount + cgstAmount;
-          row.querySelector('.amount').textContent = total.toFixed(2);
+
+          row.querySelector('.amount').textContent = total.toFixed(2); // Fix decimal places
+          
           subtotal += amount;
           totalSgst += sgstAmount;
           totalCgst += cgstAmount;
           totalAmount += total;
         });
+        
         document.getElementById('subtotal').textContent = subtotal.toFixed(2);
         document.getElementById('totalSgst').textContent = totalSgst.toFixed(2);
         document.getElementById('totalCgst').textContent = totalCgst.toFixed(2);
         document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
       }
+
+      // Handle form submission
+      document.getElementById('invoiceForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        // Create a FormData object
+        const formData = new FormData(this);
+        const logoInput= document.getElementById('logo');
+        
+        formData.append('logo',logoInput.files[0]);
+        // Convert FormData to JSON
+        const jsonData = {};
+        for (const [key, value] of formData.entries()) {
+            if (key.startsWith('items')) {
+                const itemIndexMatch = key.match(/items\[(\d+)\]/);
+                if (itemIndexMatch) {
+                    const index = itemIndexMatch[1];
+                    if (!jsonData.items) jsonData.items = [];
+                    jsonData.items[index] = jsonData.items[index] || {};
+                    jsonData.items[index][key.split('[')[2].split(']')[0]] = value; // Get field names dynamically
+                }
+            } else {
+                jsonData[key] = value; // Regular fields
+            }
+        }
+        console.log(logo);
+        // Send JSON data via fetch
+          fetch('/download-invoice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => response.blob()) // Expecting a PDF response
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'invoice.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => console.error('Error:', error));
+      });
     });
+  
   </script>
+
 </body>
+
 </html>
