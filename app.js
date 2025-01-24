@@ -17,16 +17,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Specify the upload directory
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to filename
-    }
-});
 
-const upload = multer({ storage });
+
+const upload = multer();
 
 //Middleware to parse JSON bodies
 console.log("HI");
@@ -41,7 +34,17 @@ app.get("/", (req, res) => {
         res.send(html);
     });
 });
+var logoImage;
+app.post('/upload-logo', upload.single('logo'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded.' });
+    }
 
+    logoImage = req.file.buffer;
+
+    // Send a JSON response to avoid parsing errors in the frontend
+    return res.status(200).json({ message: 'Done!!' });
+});
 app.post('/download-invoice', upload.single('logo'), (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="invoice.pdf"');
@@ -52,6 +55,7 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
     const { companyName, address, phone, invoicedate, gstin, items,customerName, customerAddress, duedate,  invoiceno, sgst, cgst } = req.body;
  // let invoiceDate=req.body.invoicedate
     console.log(req.body);
+    doc.image(logoImage, 477, 1, { width: 100, height: 100 });
 
     // Company Header
     doc.fontSize(18).font('Helvetica-Bold').text(companyName || 'Your Company Name', 49, 25, { width: 400 });

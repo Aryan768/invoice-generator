@@ -319,7 +319,26 @@
             }
         }
         console.log(logo);
-        // Send JSON data via fetch
+        // Send JSON data via fetch   
+        if (logoInput.files.length > 0) {
+    // If a file is present, upload it first
+    const uploadFormData = new FormData();
+    uploadFormData.append('logo', logoInput.files[0]);
+
+    fetch('/upload-logo', {
+        method: 'POST',
+        body: uploadFormData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('File uploaded successfully:', data);
+        // After the file is uploaded, send the JSON data
+  
+    })
+    .catch(error => {
+        console.error('Error uploading file:', error);
+    });
+
           fetch('/download-invoice', {
             method: 'POST',
             headers: {
@@ -339,8 +358,9 @@
             window.URL.revokeObjectURL(url);
         })
         .catch(error => console.error('Error:', error));
+    }})
       });
-    });
+    
   
   </script>
 
