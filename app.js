@@ -2,8 +2,11 @@ import express from 'express';
 import PDFDocument from 'pdfkit';
 import multer from 'multer';
 import path from 'path';
-
+import connectDB from './db.js'
+import Invoice from './models/invoice.js';
 import { fileURLToPath } from 'url';
+import { type } from 'os';
+connectDB();
 // Set up __dirname in ES6
 const __filename = fileURLToPath(import.meta.url);
 console.log(__filename);
@@ -39,13 +42,13 @@ app.post('/upload-logo', upload.single('logo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded.' });
     }
-
+   
     logoImage = req.file.buffer;
-
     // Send a JSON response to avoid parsing errors in the frontend
+    
     return res.status(200).json({ message: 'Done!!' });
 });
-app.post('/download-invoice', upload.single('logo'), (req, res) => {
+app.post('/download-invoice', upload.single('logo'), async(req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="invoice.pdf"');
 
@@ -55,7 +58,13 @@ app.post('/download-invoice', upload.single('logo'), (req, res) => {
     const { companyName, address, phone, invoicedate, gstin, items,customerName, customerAddress, duedate,  invoiceno, sgst, cgst } = req.body;
  // let invoiceDate=req.body.invoicedate
     console.log(req.body);
-    doc.image(logoImage, 477, 1, { width: 100, height: 100 });
+    if (logoImage) {
+        doc.image(logoImage, 477, 1, { width: 100, height: 100 });
+    } else {
+        console.log("No logoImage found.");
+    }
+   // doc.image(logoImage, 477, 1, { width: 100, height: 100 });
+console.log(typeof(items));
 
     // Company Header
     doc.fontSize(18).font('Helvetica-Bold').text(companyName || 'Your Company Name', 49, 25, { width: 400 });
@@ -187,7 +196,25 @@ sgstRate = parseFloat(item.sgst) / 100; // e.g., for SGST of 9%
 
    // Finalize the PDF document
    doc.end();
+   //MongoDB
+   const newInvoice = new Invoice({
+    companyName,
+    address,
+    phone,
+    invoicedate,
+    gstin,
+    items,
+    customerName,
+    customerAddress,
+    duedate,
+    invoiceno,
+    totalAmountFinal,
 });
+
+await newInvoice.save();
+
+}
+)
 
 app.listen(PORT, () => {
    console.log(`App is listening on port ${PORT}`);

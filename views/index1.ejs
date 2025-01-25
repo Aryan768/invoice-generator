@@ -133,12 +133,27 @@
       gap: 15px;
     }
 
-    /* Media queries for responsiveness */
+  
     @media (max-width: 768px) {
       .left-one {
         grid-template-columns: 1fr;
       }
     }
+    #logo-preview-container {
+  position: absolute;
+  top: 15px; 
+  right: 399px; 
+  max-width: 95px; 
+  max-height: 95px;
+  border-radius: 5px;
+  display: none; /* Hidden until the image is selected */
+}
+
+#logo-preview {
+  width: 100%; /* Ensure the logo fits the container */
+  height: auto;
+}
+
 
   </style>
 </head>
@@ -148,7 +163,9 @@
     <label for="logo">Upload Logo:</label>
     <input type="file" id="logo" name="logo" accept="image/*">
   </div>
-
+  <div id="logo-preview-container" style="display: none;"> 
+    <img id="logo-preview" src=""> 
+</div>
   <div class="container">
     <h1>Invoice</h1>
     <form id="invoiceForm">
@@ -292,7 +309,41 @@
         document.getElementById('totalSgst').textContent = totalSgst.toFixed(2);
         document.getElementById('totalCgst').textContent = totalCgst.toFixed(2);
         document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
-      }
+      }        
+      const logoInput= document.getElementById('logo');
+        const logoPreview = document.getElementById('logo-preview');
+        const logoPreviewContainer = document.getElementById('logo-preview-container');
+      logoInput.addEventListener('change', function() {
+
+        if (logoInput.files.length > 0) {
+    // If a file is present, upload it first
+    const uploadFormData = new FormData();
+
+    uploadFormData.append('logo', logoInput.files[0]);
+    const reader = new FileReader();
+
+reader.onload = function(e) {
+    logoPreview.src = e.target.result;
+    logoPreviewContainer.style.display = 'block'; 
+};
+
+reader.readAsDataURL(logoInput.files[0]);
+    fetch('/upload-logo', {
+        method: 'POST',
+
+        body: uploadFormData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('File uploaded successfully:', data);
+        // After the file is uploaded, send the JSON data
+  
+    })
+    .catch(error => {
+        console.error('Error uploading file:', error);
+    });
+  }
+})
 
       // Handle form submission
       document.getElementById('invoiceForm').addEventListener('submit', function(event) {
@@ -300,9 +351,8 @@
 
         // Create a FormData object
         const formData = new FormData(this);
-        const logoInput= document.getElementById('logo');
+       
         
-        formData.append('logo',logoInput.files[0]);
         // Convert FormData to JSON
         const jsonData = {};
         for (const [key, value] of formData.entries()) {
@@ -320,24 +370,6 @@
         }
         console.log(logo);
         // Send JSON data via fetch   
-        if (logoInput.files.length > 0) {
-    // If a file is present, upload it first
-    const uploadFormData = new FormData();
-    uploadFormData.append('logo', logoInput.files[0]);
-
-    fetch('/upload-logo', {
-        method: 'POST',
-        body: uploadFormData
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('File uploaded successfully:', data);
-        // After the file is uploaded, send the JSON data
-  
-    })
-    .catch(error => {
-        console.error('Error uploading file:', error);
-    });
 
           fetch('/download-invoice', {
             method: 'POST',
@@ -358,9 +390,9 @@
             window.URL.revokeObjectURL(url);
         })
         .catch(error => console.error('Error:', error));
-    }})
-      });
-    
+    })
+     
+  })
   
   </script>
 
