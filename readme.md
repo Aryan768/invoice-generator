@@ -29,5 +29,5 @@ Follow these steps to set up and run the project locally:
    git clone https://github.com/Aryan768/invoice-generator.git
 
 # YouTube Overview
-[![IMAGE ALT TEXT](http://img.youtube.com/vi/a4X14N_f4d8/0.jpg)](http://www.youtube.com/watch?v=a4X14N_f4d8 "invoice-generator")
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/a4X14N_f4d8/maxresdefault.jpg)](http://www.youtube.com/watch?v=a4X14N_f4d8 "invoice-generator")
 
