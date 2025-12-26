@@ -27,9 +27,9 @@ const upload = multer();
 //Middleware to parse JSON bodies
 console.log("HI");
 app.get("/", (req, res) => {
-   console.log("Entered get");
-   const items =0;
-    res.render('index1',{items}, (err, html) => {
+    console.log("Entered get");
+    const items = 0;
+    res.render('index1', { items }, (err, html) => {
         if (err) {
             console.error(err);
             return res.status(500).send("Error rendering template");
@@ -37,34 +37,40 @@ app.get("/", (req, res) => {
         res.send(html);
     });
 });
+
+// Test route for CI/CD verification
+app.get("/test", (req, res) => {
+    res.status(200).send("Hello World");
+});
+
 var logoImage;
 app.post('/upload-logo', upload.single('logo'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded.' });
     }
-   
+
     logoImage = req.file.buffer;
     // Send a JSON response to avoid parsing errors in the frontend
-    
+
     return res.status(200).json({ message: 'Done!!' });
 });
-app.post('/download-invoice', upload.single('logo'), async(req, res) => {
+app.post('/download-invoice', upload.single('logo'), async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="invoice.pdf"');
 
     const doc = new PDFDocument();
     doc.pipe(res);
 
-    const { companyName, address, phone, invoicedate, gstin, items,customerName, customerAddress, duedate,  invoiceno, sgst, cgst } = req.body;
- // let invoiceDate=req.body.invoicedate
+    const { companyName, address, phone, invoicedate, gstin, items, customerName, customerAddress, duedate, invoiceno, sgst, cgst } = req.body;
+    // let invoiceDate=req.body.invoicedate
     console.log(req.body);
     if (logoImage) {
         doc.image(logoImage, 477, 1, { width: 100, height: 100 });
     } else {
         console.log("No logoImage found.");
     }
-   // doc.image(logoImage, 477, 1, { width: 100, height: 100 });
-console.log(typeof(items));
+    // doc.image(logoImage, 477, 1, { width: 100, height: 100 });
+    console.log(typeof (items));
 
     // Company Header
     doc.fontSize(18).font('Helvetica-Bold').text(companyName || 'Your Company Name', 49, 25, { width: 400 });
@@ -114,9 +120,9 @@ console.log(typeof(items));
 
     let y = tableTop + itemHeight + 5;
     // Tax rate for SGST and CGST
-   let sgstRate = '';
-  let cgstRate ='' ;
-    
+    let sgstRate = '';
+    let cgstRate = '';
+
     console.log(items);
     // Dynamically render items
     items.forEach((item, index) => {
@@ -129,16 +135,16 @@ console.log(typeof(items));
         });
 
         const maxHeight = Math.max(itemHeight, descriptionHeight);
-// Tax rate for SGST and CGST
-sgstRate = parseFloat(item.sgst) / 100; // e.g., for SGST of 9%
- cgstRate = parseFloat(item.cgst) / 100; // e.g., for CGST of 9%
+        // Tax rate for SGST and CGST
+        sgstRate = parseFloat(item.sgst) / 100; // e.g., for SGST of 9%
+        cgstRate = parseFloat(item.cgst) / 100; // e.g., for CGST of 9%
         const amount = Number(item.quantity) * Number(item.rate);
         const sgstAmount = amount * sgstRate;
         const cgstAmount = amount * cgstRate;
         const totalAmount = amount + sgstAmount + cgstAmount;
 
         // Reset font to normal for item details
-        doc.font('Helvetica'); 
+        doc.font('Helvetica');
         doc.fontSize(8);
 
         // Print item details
@@ -153,8 +159,8 @@ sgstRate = parseFloat(item.sgst) / 100; // e.g., for SGST of 9%
 
         // Light grey percentage below SGST/CGST
         doc.fontSize(8).fillColor('grey')
-            .text(`${(sgstRate * 100).toFixed(0)}%`, columnXPositions[5], y + maxHeight * 0.4 +4)
-            .text(`${(cgstRate * 100).toFixed(0)}%`, columnXPositions[6], y + maxHeight * 0.4 +4);
+            .text(`${(sgstRate * 100).toFixed(0)}%`, columnXPositions[5], y + maxHeight * 0.4 + 4)
+            .text(`${(cgstRate * 100).toFixed(0)}%`, columnXPositions[6], y + maxHeight * 0.4 + 4);
 
         doc.fillColor('black'); // Reset to black for next row
 
@@ -181,41 +187,41 @@ sgstRate = parseFloat(item.sgst) / 100; // e.g., for SGST of 9%
     totalYPosition += itemHeight * 1.5;
 
     doc.text('SGST :', columnXPositions[5], totalYPosition)
-       .text(sgstTotal.toFixed(2), columnXPositions[7], totalYPosition);
+        .text(sgstTotal.toFixed(2), columnXPositions[7], totalYPosition);
 
     totalYPosition += itemHeight * 1.5;
 
     doc.text('CGST :', columnXPositions[5], totalYPosition)
-       .text(cgstTotal.toFixed(2), columnXPositions[7], totalYPosition);
+        .text(cgstTotal.toFixed(2), columnXPositions[7], totalYPosition);
 
     totalYPosition += itemHeight * 1.5;
 
     doc.text('Total:', columnXPositions[5], totalYPosition)
-       .font('Helvetica-Bold') // Ensure this is bold for the final total
-       .text(totalAmountFinal.toFixed(2), columnXPositions[7], totalYPosition);
+        .font('Helvetica-Bold') // Ensure this is bold for the final total
+        .text(totalAmountFinal.toFixed(2), columnXPositions[7], totalYPosition);
 
-   // Finalize the PDF document
-   doc.end();
-   //MongoDB
-   const newInvoice = new Invoice({
-    companyName,
-    address,
-    phone,
-    invoicedate,
-    gstin,
-    items,
-    customerName,
-    customerAddress,
-    duedate,
-    invoiceno,
-    totalAmountFinal,
-});
+    // Finalize the PDF document
+    doc.end();
+    //MongoDB
+    const newInvoice = new Invoice({
+        companyName,
+        address,
+        phone,
+        invoicedate,
+        gstin,
+        items,
+        customerName,
+        customerAddress,
+        duedate,
+        invoiceno,
+        totalAmountFinal,
+    });
 
-await newInvoice.save();
+    await newInvoice.save();
 
 }
 )
 
 app.listen(PORT, () => {
-   console.log(`App is listening on port ${PORT}`);
+    console.log(`App is listening on port ${PORT}`);
 });
