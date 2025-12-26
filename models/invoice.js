@@ -8,19 +8,21 @@ const itemSchema = new mongoose.Schema({
     rate: String,
 
 
-  
-    sgst:String,
-    cgst:String
+
+    sgst: String,
+    cgst: String
 });
 
 const invoiceSchema = new mongoose.Schema({
     companyName: { type: String, required: false }, // Keeping type as String
     address: { type: String, required: false }, // Keeping type as String
-    phone: { type: Number, required: false }, // Changed type to Number
-    invoiceDate: { type: Number, required: false }, // Changed type to Number
-    gstin: { type: Number, required: false }, // Changed type to Number
-    items: [{type:itemSchema,
-    required:false}], 
+    phone: { type: String, required: false },
+    invoicedate: { type: String, required: false },
+    gstin: { type: String, required: false },
+    items: [{
+        type: itemSchema,
+        required: false
+    }],
     customerName: { type: String, required: false }, // Changed type to Number
     customerAddress: { type: String, required: false }, // Keeping type as String
     duedate: { type: String, required: false }, // Changed type to Number
